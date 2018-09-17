@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">TimeShowApp</string>
+    <string name="btn_show">Show time</string>
+    <string name="btn_clear">Clear</string>
 </resources>
