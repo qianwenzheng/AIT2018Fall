@@ -15,8 +15,22 @@ object TicTacToeModel {
 
     private var nextPlayer = CIRCLE
 
+    private var lastX = -1
+    private var lastY = -1
+
+    fun undo() {
+        if (lastX != -1 && lastY != -1) {
+            model[lastX][lastY] = EMPTY
+            lastX = -1
+            lastY = -1
+            changeNextPlayer()
+        }
+    }
+
     fun setFieldContent(x: Int, y: Int, player: Short) {
         model[x][y] = player
+        lastX = x
+        lastY = y
     }
 
     fun getFieldContent(x: Int, y: Int) = model[x][y]

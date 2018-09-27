@@ -1,20 +1,22 @@
 package hu.ait.android.tictactoe.ui
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.PointF
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import hu.ait.android.tictactoe.MainActivity
+import hu.ait.android.tictactoe.R
 import hu.ait.android.tictactoe.model.TicTacToeModel
 
 class TicTacToeView(context: Context?, attrs: AttributeSet?) : View(context, attrs)
 {
     private val paintBackGround = Paint()
     private val paintLine = Paint()
+    private val paintText = Paint()
+
+    private var bitMapBg =
+            BitmapFactory.decodeResource(resources, R.drawable.grass)
 
     init {
         paintBackGround.color = Color.BLACK
@@ -24,6 +26,18 @@ class TicTacToeView(context: Context?, attrs: AttributeSet?) : View(context, att
         paintLine.color = Color.WHITE
         paintLine.style = Paint.Style.STROKE
         paintLine.strokeWidth = 5F
+
+        paintText.color = Color.GREEN
+        paintText.textSize = 100F
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+
+        paintText.textSize = height.toFloat()/3
+
+        bitMapBg = Bitmap.createScaledBitmap(bitMapBg,
+                width/3, height/3,false)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -31,6 +45,10 @@ class TicTacToeView(context: Context?, attrs: AttributeSet?) : View(context, att
 
         canvas.drawRect(0f, 0f,
                 width.toFloat(), height.toFloat(), paintBackGround)
+
+        canvas.drawBitmap(bitMapBg, 0F, 0F, null)
+
+        canvas.drawText("A", 10F, height.toFloat()/3, paintText)
 
         drawGameArea(canvas)
 
@@ -83,20 +101,22 @@ class TicTacToeView(context: Context?, attrs: AttributeSet?) : View(context, att
 
             TicTacToeModel.setFieldContent(tX, tY, TicTacToeModel.getNextPlayer())
             TicTacToeModel.changeNextPlayer()
+            (context as MainActivity).showNextPlayer(
+                    if (TicTacToeModel.getNextPlayer() == TicTacToeModel.CIRCLE) "0 is coming" else
+                        "X is coming"
+            )
+
+            (context as MainActivity).showUndoMessage("Next move")
+
             invalidate()
 
-            (context as MainActivity).showMessage("you have won")
+            //(context as MainActivity).showMessage("you have won")
         }
 
         return super.onTouchEvent(event)
     }
 
-    public fun restart() {
-        TicTacToeModel.resetModel()
 
-
-        invalidate()
-    }
 
 }
 
