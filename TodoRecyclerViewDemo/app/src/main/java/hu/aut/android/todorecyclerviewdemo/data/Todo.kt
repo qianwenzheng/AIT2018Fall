@@ -1,5 +1,14 @@
 package hu.aut.android.todorecyclerviewdemo.data
 
+import android.arch.persistence.room.ColumnInfo
+import android.arch.persistence.room.Entity
+import android.arch.persistence.room.PrimaryKey
+
+@Entity(tableName = "todo")
 data class Todo(
-    var createDate: String, var done: Boolean, var todoText: String)
+    @PrimaryKey(autoGenerate = true) var todoId: Long?,
+    @ColumnInfo(name = "createdate") var createDate: String,
+    @ColumnInfo(name = "done") var done: Boolean,
+    @ColumnInfo(name = "todotext") var todoText: String
+)
 
