@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import hu.aut.android.todorecyclerviewdemo.R
+import hu.aut.android.todorecyclerviewdemo.ScrollingActivity
 import hu.aut.android.todorecyclerviewdemo.data.AppDatabase
 import hu.aut.android.todorecyclerviewdemo.data.Todo
 import hu.aut.android.todorecyclerviewdemo.touch.TodoTochHelperAdapter
@@ -18,12 +19,11 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolder>, TodoTochHelper
 
     var todoItems = mutableListOf<Todo>()
 
-
     val context : Context
 
-    constructor(context: Context, items: List<Todo>) : super() {
+    constructor(context: Context, todoList: List<Todo>) : super() {
         this.context = context
-        this.todoItems.addAll(items)
+        this.todoItems.addAll(todoList)
     }
 
     constructor(context: Context) : super() {
@@ -52,14 +52,28 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolder>, TodoTochHelper
             deleteTodo(holder.adapterPosition)
         }
 
+        holder.btnEdit.setOnClickListener {
+            (context as ScrollingActivity).showEditTodoDialog(
+                todo, holder.adapterPosition
+            )
+        }
+
         holder.itemView.setOnClickListener{
             Toast.makeText(context, "HELLOO", Toast.LENGTH_LONG).show()
         }
     }
 
     private fun deleteTodo(adapterPosition: Int) {
-        todoItems.removeAt(adapterPosition)
-        notifyItemRemoved(adapterPosition)
+        Thread {
+            AppDatabase.getInstance(
+                context).todoDao().deleteTodo(todoItems[adapterPosition])
+
+            todoItems.removeAt(adapterPosition)
+
+            (context as ScrollingActivity).runOnUiThread {
+                notifyItemRemoved(adapterPosition)
+            }
+        }.start()
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
@@ -67,6 +81,7 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolder>, TodoTochHelper
         val tvDate = itemView.tvDate
         val cbDone = itemView.cbDone
         val btnDelete = itemView.btnDelete
+        val btnEdit = itemView.btnEdit
     }
 
 
@@ -83,6 +98,11 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolder>, TodoTochHelper
     override fun onItemMoved(fromPosition: Int, toPosition: Int) {
         Collections.swap(todoItems, fromPosition, toPosition)
         notifyItemMoved(fromPosition, toPosition)
+    }
+
+    fun updateTodo(item: Todo, editIndex: Int) {
+        todoItems[editIndex] = item
+        notifyItemChanged(editIndex)
     }
 
 }

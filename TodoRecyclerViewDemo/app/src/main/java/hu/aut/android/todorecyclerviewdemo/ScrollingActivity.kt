@@ -15,9 +15,15 @@ import hu.aut.android.todorecyclerviewdemo.touch.TodoTouchHelperCallback
 import kotlinx.android.synthetic.main.activity_scrolling.*
 import java.util.Date
 
-class ScrollingActivity : AppCompatActivity() {
-
+class ScrollingActivity : AppCompatActivity(), TodoDialog.TodoHandler {
     private lateinit var todoAdapter: TodoAdapter
+
+    companion object {
+        val KEY_ITEM_TO_EDIT = "KEY_ITEM_TO_EDIT"
+    }
+    private var editIndex: Int = 0
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,13 +38,23 @@ class ScrollingActivity : AppCompatActivity() {
             showAddTodoDialog()
         }
 
+        initRecyclerView()
+    }
+
+    private fun initRecyclerView() {
         Thread {
-            val todos = AppDatabase.getInstance(this@ScrollingActivity).todoDao().findAllTodos()
+            val todoList = AppDatabase.getInstance(
+                this@ScrollingActivity
+            ).todoDao().findAllTodos()
+
+            todoAdapter = TodoAdapter(
+                this@ScrollingActivity,
+                todoList
+            )
 
             runOnUiThread {
-                todoAdapter = TodoAdapter(this@ScrollingActivity, todos)
-
                 recyclerTodo.adapter = todoAdapter
+
                 val callback = TodoTouchHelperCallback(todoAdapter)
                 val touchHelper = ItemTouchHelper(callback)
                 touchHelper.attachToRecyclerView(recyclerTodo)
@@ -47,28 +63,20 @@ class ScrollingActivity : AppCompatActivity() {
     }
 
     private fun showAddTodoDialog() {
-        val dialogBuilder = AlertDialog.Builder(this)
-        dialogBuilder.setTitle("Enter todo")
-        val input = EditText(this)
-        dialogBuilder.setView(input)
-        dialogBuilder.setNegativeButton("Cancel") { dialog, button ->
-            dialog.dismiss()
-        }
-        dialogBuilder.setPositiveButton("Add") { dialog, button ->
-            val todo = Todo(
-                null,
-                Date(System.currentTimeMillis()).toString(),
-                false, input.text.toString()
-            )
+        TodoDialog().show(supportFragmentManager,
+            "TAG_CREATE")
+    }
 
-            Thread {
-                AppDatabase.getInstance(this).todoDao().insertTodo(todo)
-                runOnUiThread{
-                    todoAdapter.addTodo(todo)
-                }
-            }.start()
-        }
-        dialogBuilder.show()
+    public fun showEditTodoDialog(todoToEdit: Todo, idx: Int) {
+        editIndex = idx
+        val editItemDialog = TodoDialog()
+
+        val bundle = Bundle()
+        bundle.putSerializable(KEY_ITEM_TO_EDIT, todoToEdit)
+        editItemDialog.arguments = bundle
+
+        editItemDialog.show(supportFragmentManager,
+            "EDITITEMDIALOG")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -81,5 +89,29 @@ class ScrollingActivity : AppCompatActivity() {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun todoCreated(item: Todo) {
+        Thread {
+            val todoId = AppDatabase.getInstance(
+                this@ScrollingActivity).todoDao().insertTodo(item)
+
+            item.todoId = todoId
+
+            runOnUiThread {
+                todoAdapter.addTodo(item)
+            }
+        }.start()
+    }
+
+    override fun todoUpdated(item: Todo) {
+        Thread {
+            AppDatabase.getInstance(
+                this@ScrollingActivity).todoDao().updateTodo(item)
+
+            runOnUiThread{
+                todoAdapter.updateTodo(item, editIndex)
+            }
+        }.start()
     }
 }
