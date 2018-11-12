@@ -1,6 +1,7 @@
 package hu.aut.android.todorecyclerviewdemo
 
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
@@ -13,6 +14,7 @@ import hu.aut.android.todorecyclerviewdemo.data.AppDatabase
 import hu.aut.android.todorecyclerviewdemo.data.Todo
 import hu.aut.android.todorecyclerviewdemo.touch.TodoTouchHelperCallback
 import kotlinx.android.synthetic.main.activity_scrolling.*
+import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt
 import java.util.Date
 
 class ScrollingActivity : AppCompatActivity(), TodoDialog.TodoHandler {
@@ -39,7 +41,34 @@ class ScrollingActivity : AppCompatActivity(), TodoDialog.TodoHandler {
         }
 
         initRecyclerView()
+
+        if (isFirstStart()) {
+            MaterialTapTargetPrompt.Builder(this)
+                .setTarget(R.id.fabAddTodo)
+                .setPrimaryText("Tutorial")
+                .setSecondaryText("Click here for adding todos")
+                .show()
+
+            saveStart()
+        }
+
     }
+
+    private val KEY_FIRST = "KEY_FIRST"
+
+    fun isFirstStart() : Boolean {
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        return sp.getBoolean(KEY_FIRST, true)
+    }
+
+    fun saveStart() {
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        val editor = sp.edit()
+        editor.putBoolean(KEY_FIRST, false)
+        editor.apply()
+    }
+
+
 
     private fun initRecyclerView() {
         Thread {
